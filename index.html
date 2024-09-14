@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spin the Wheel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        /* CSS styles go here */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        #wheelCanvas {
+            margin: 20px auto;
+            display: block;
+        }
+        #controls {
+            margin: 20px;
+        }
+        #namesList {
+            max-width: 300px;
+            margin: 0 auto;
+            text-align: left;
+        }
+        #spinButton {
+            padding: 10px 20px;
+            font-size: 18px;
+        }
+        .nameOption {
+            margin: 5px 0;
+        }
+        .nameOption input {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Spin the Wheel</h1>
+
+<canvas id="wheelCanvas" width="300" height="300"></canvas>
+
+<button id="spinButton">Spin!</button>
+
+<div id="controls">
+    <h2>Select Names</h2>
+    <div id="namesList">
+        <!-- Name options will be injected here -->
+    </div>
+</div>
+
+<!-- Result Modal -->
+<div id="resultModal" style="display:none;">
+    <div id="resultContent">
+        <p id="resultText"></p>
+        <button id="removeButton">Remove from Wheel</button>
+        <button id="keepButton">Keep on Wheel</button>
+    </div>
+</div>
+
+<script>
+    // JavaScript code goes here
+
+    // Names list
+    const names = [
+        'Budge', 'Alex', 'Duncan', 'Bruno', 'Wilkie', 'Ollie S', 'Sam L', 'Jordy', 'Max',
+        'Charlotte', 'Devon', 'Sarah', 'Tinaya', 'Jess',
+        'Guest 1', 'Guest 2'
+    ];
+
+    let selectedNames = [];
+
+    // Initialize the app
+    window.onload = function() {
+        const namesListDiv = document.getElementById('namesList');
+
+        // Create checkboxes for each name
+        names.forEach(name => {
+            const div = document.createElement('div');
+            div.className = 'nameOption';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = name;
+            checkbox.checked = true;
+            checkbox.onchange = updateSelectedNames;
+            const label = document.createElement('label');
+            label.textContent = name;
+            label.prepend(checkbox);
+            div.appendChild(label);
+            namesListDiv.appendChild(div);
+        });
+
+        // Initialize selected names
+        selectedNames = [...names];
+
+        // Draw the wheel
+        drawWheel();
+
+        // Add event listener to spin button
+        document.getElementById('spinButton').addEventListener('click', spinWheel);
+    };
+
+    function updateSelectedNames() {
+        selectedNames = Array.from(document.querySelectorAll('#namesList input:checked')).map(input => input.value);
+        drawWheel();
+    }
+
+    function drawWheel() {
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const numSegments = selectedNames.length;
+        const anglePerSegment = (2 * Math.PI) / numSegments;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        selectedNames.forEach((name, index) => {
+            // Draw segment
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, canvas.height / 2);
+            ctx.arc(
+                canvas.width / 2,
+                canvas.height / 2,
+                canvas.width / 2,
+                index * anglePerSegment,
+                (index + 1) * anglePerSegment
+            );
+            ctx.closePath();
+            ctx.fillStyle = getRandomColor();
+            ctx.fill();
+
+            // Draw text
+            ctx.save();
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(index * anglePerSegment + anglePerSegment / 2);
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#000';
+            ctx.font = '14px Arial';
+            ctx.fillText(name, canvas.width / 2 - 10, 0);
+            ctx.restore();
+        });
+    }
+
+    function spinWheel() {
+        if (selectedNames.length === 0) {
+            alert('Please select at least one name.');
+            return;
+        }
+
+        const randomIndex = Math.floor(Math.random() * selectedNames.length);
+        const selectedName = selectedNames[randomIndex];
+
+        // Display result
+        showResult(selectedName, randomIndex);
+    }
+
+    function showResult(name, index) {
+        const resultModal = document.getElementById('resultModal');
+        const resultText = document.getElementById('resultText');
+        resultText.textContent = `Selected: ${name}`;
+
+        resultModal.style.display = 'block';
+
+        // Remove or keep buttons
+        document.getElementById('removeButton').onclick = function() {
+            selectedNames.splice(index, 1);
+            updateCheckboxes();
+            drawWheel();
+            resultModal.style.display = 'none';
+        };
+
+        document.getElementById('keepButton').onclick = function() {
+            resultModal.style.display = 'none';
+        };
+    }
+
+    function updateCheckboxes() {
+        const checkboxes = document.querySelectorAll('#namesList input');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectedNames.includes(checkbox.value);
+        });
+    }
+
+    function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++ ) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+</script>
+
+</body>
+</html>

@@ -187,6 +187,10 @@
     </div>
 </div>
 
+<!-- Audio Elements for Sound Effects -->
+<audio id="spinSound" src="spin.mp3"></audio>
+<audio id="winSound" src="win.mp3"></audio>
+
 <script>
     // JavaScript code
 
@@ -273,15 +277,15 @@
         }
 
         selectedNames.forEach((name, index) => {
-            // Draw segment
+            // Draw segment starting from -90 degrees (top)
             ctx.beginPath();
             ctx.moveTo(canvas.width / 2, canvas.height / 2);
             ctx.arc(
                 canvas.width / 2,
                 canvas.height / 2,
                 canvas.width / 2,
-                index * anglePerSegment,
-                (index + 1) * anglePerSegment
+                (-Math.PI / 2) + index * anglePerSegment,
+                (-Math.PI / 2) + (index + 1) * anglePerSegment
             );
             ctx.closePath();
             ctx.fillStyle = nameColorMap[name];
@@ -290,7 +294,7 @@
             // Draw text
             ctx.save();
             ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(index * anglePerSegment + anglePerSegment / 2);
+            ctx.rotate((-Math.PI / 2) + index * anglePerSegment + anglePerSegment / 2);
             ctx.textAlign = 'right';
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 14px Arial';
@@ -317,6 +321,11 @@
 
         const startTime = performance.now();
 
+        // Play spin sound
+        const spinSound = document.getElementById('spinSound');
+        spinSound.currentTime = 0;
+        spinSound.play();
+
         function animate(currentTime) {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / spinDuration, 1);
@@ -334,6 +343,8 @@
                 isSpinning = false;
                 determineWinner(endRotation % 360);
                 spinButton.disabled = selectedNames.length === 0;
+                spinSound.pause();
+                spinSound.currentTime = 0;
             }
         }
 
@@ -344,9 +355,9 @@
         const numSegments = selectedNames.length;
         const anglePerSegment = 360 / numSegments;
 
-        // Calculate the winning segment index
-        const adjustedRotation = (360 - (finalRotation % 360) + anglePerSegment / 2) % 360;
-        let index = Math.floor(adjustedRotation / anglePerSegment) % numSegments;
+        // Adjust rotation to start from top (-90 degrees)
+        const adjustedRotation = (finalRotation + anglePerSegment / 2) % 360;
+        let index = Math.floor((adjustedRotation) / anglePerSegment) % numSegments;
 
         // Ensure index is within bounds
         if (index < 0) index = 0;
@@ -364,6 +375,11 @@
         resultText.textContent = `🎉 Congratulations, ${name}! 🎉`;
 
         resultModal.style.display = 'flex';
+
+        // Play win sound
+        const winSound = document.getElementById('winSound');
+        winSound.currentTime = 0;
+        winSound.play();
 
         // Start confetti
         startConfetti();

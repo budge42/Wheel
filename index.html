@@ -33,7 +33,6 @@
             width: 100%;
             height: 100%;
             transform: rotate(0deg);
-            transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);
         }
 
         #pointer {
@@ -210,16 +209,22 @@
         '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080'
     ];
 
+    // Map names to colors
+    const nameColorMap = {};
+    names.forEach((name, index) => {
+        nameColorMap[name] = buttonColors[index % buttonColors.length];
+    });
+
     // Initialize the app
     window.onload = function() {
         const namesListDiv = document.getElementById('namesList');
 
         // Create buttons for each name
-        names.forEach((name, index) => {
+        names.forEach((name) => {
             const button = document.createElement('button');
             button.className = 'nameButton';
             button.textContent = name;
-            button.style.backgroundColor = buttonColors[index % buttonColors.length];
+            button.style.backgroundColor = nameColorMap[name];
             button.dataset.name = name;
             button.onclick = toggleNameSelection;
             namesListDiv.appendChild(button);
@@ -279,7 +284,7 @@
                 (index + 1) * anglePerSegment
             );
             ctx.closePath();
-            ctx.fillStyle = buttonColors[index % buttonColors.length];
+            ctx.fillStyle = nameColorMap[name];
             ctx.fill();
 
             // Draw text
@@ -305,9 +310,10 @@
         const numSegments = selectedNames.length;
 
         // Randomly determine the spin duration and end rotation
-        const spinDuration = 4000; // 4 seconds
-        const spins = Math.floor(Math.random() * 5) + 5; // Random spins between 5 and 9
-        const endRotation = (Math.random() * 360) + (spins * 360); // Total degrees
+        const spinDuration = 5000; // 5 seconds
+        const spins = Math.floor(Math.random() * 4) + 5; // Random spins between 5 and 8
+        const randomAngle = Math.random() * 360;
+        const endRotation = (spins * 360) + randomAngle; // Total degrees
 
         const startTime = performance.now();
 
@@ -315,8 +321,8 @@
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / spinDuration, 1);
 
-            // Ease out cubic function
-            const easedProgress = 1 - Math.pow(1 - progress, 3);
+            // Ease out quart function for smoother deceleration
+            const easedProgress = 1 - Math.pow(1 - progress, 4);
 
             wheelRotation = easedProgress * endRotation;
 
@@ -326,7 +332,7 @@
                 requestAnimationFrame(animate);
             } else {
                 isSpinning = false;
-                determineWinner();
+                determineWinner(endRotation % 360);
                 spinButton.disabled = selectedNames.length === 0;
             }
         }
@@ -334,14 +340,18 @@
         requestAnimationFrame(animate);
     }
 
-    function determineWinner() {
-        const canvas = document.getElementById('wheelCanvas');
+    function determineWinner(finalRotation) {
         const numSegments = selectedNames.length;
         const anglePerSegment = 360 / numSegments;
 
-        // Calculate the winning segment
-        const normalizedRotation = wheelRotation % 360;
-        const index = Math.floor((360 - normalizedRotation - anglePerSegment / 2) / anglePerSegment) % numSegments;
+        // Calculate the winning segment index
+        const adjustedRotation = (360 - (finalRotation % 360) + anglePerSegment / 2) % 360;
+        let index = Math.floor(adjustedRotation / anglePerSegment) % numSegments;
+
+        // Ensure index is within bounds
+        if (index < 0) index = 0;
+        if (index >= selectedNames.length) index = selectedNames.length - 1;
+
         const selectedName = selectedNames[index];
 
         // Display result
